@@ -1,0 +1,35 @@
+{
+  "htsgetConfig": {
+    "props": {
+      "port": "3000",
+      "host": "http://localhost/",
+      "logLevel": "debug",
+      "serverCert": "/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/fullchain.pem",
+      "serverKey": "/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/privkey.pem"
+    },
+    "reads": {
+      "enabled": true,
+      "dataSourceRegistry": {
+        "sources": [
+          {
+            "pattern": "^s3/(?P<accession>.*)$",
+            "path": "https://download.gdi.nbis.se/s3/{accession}"
+          },
+          {
+            "pattern": "^pub/(?P<accession>.*)$",
+            "path": "http://s3public:9000/inbox/{accession}"
+          }
+        ]
+      },
+      "serviceInfo": {
+        "id": "org.ga4gh.htsget-reference.reads"
+      }
+    },
+    "variants": {
+      "enabled": false,
+      "serviceInfo": {
+        "id": "org.ga4gh.htsget-reference.variants"
+      }
+    }
+  }
+}
