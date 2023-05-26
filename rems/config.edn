@@ -1,0 +1,28 @@
+{:port 3001
+ :public-url "https://rems.gdi.nbis.se/"
+ :database-url "postgresql://db:5432/rems?user=<REMS_DATABASE_USER>&password=<REMS_DATABASE_PASSWORD>"
+ :ssl-port 3000 
+ :ssl-keystore "/rems/certs/rems.gdi.nbis.se.keystore" ; Java keystore file
+ :ssl-keystore-password "<SSL_KEYSTORE_PASSWORD>" ; (optional) password of key file
+ :search-index-path "/tmp/rems-search-index"
+ :authentication :oidc
+ :oidc-metadata-url "https://login.elixir-czech.org/oidc/.well-known/openid-configuration" 
+ :oidc-client-id "<LS_AAI_CLIENT_ID>"
+ :oidc-client-secret "<LS_AAI_CLIENT_SECRET>"
+ :oidc-scopes "openid profile email ga4gh_passport_v1"
+ :oidc-userid-attributes [{:attribute "sub"}]
+ :oidc-name-attributes ["name" "unique_name" "family_name"]
+ :oidc-email-attributes ["email"]
+ :log-authentication-details true
+ :languages [:en]
+ :catalogue-is-public true
+ :ga4gh-visa-private-key "/rems/keys/private-key.jwk"
+ :ga4gh-visa-public-key "/rems/keys/public-key.jwk"
+ :enable-permissions-api true
+ :enable-pdf-api true
+ :enable-catalogue-tree true
+ :catalogue-tree-show-matching-parents true
+ :enable-autosave true
+ :extra-stylesheets {:root "./" :files ["/theme/styles.css"]}
+ :theme-path "/rems/theme/theme.edn"
+ :extra-pages-path "/rems/extra-pages"}
