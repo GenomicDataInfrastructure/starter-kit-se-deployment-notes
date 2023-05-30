@@ -317,6 +317,20 @@ For example:
 ## Apply and get access to dataset
 Login to REMS (deployed earlier), pick a dataset from the catalogue item list and apply for access. The handler then should approve the request and the user should now have the visas to access the files from the dataset.
 
+## Deploying containerised computation
+The `containerised-computation` product can be deployed by running
+```bash
+docker compose up --build -d
+```
+from the root of the repository. In the repository, there exists a job that calculates the md5sum of a file that exists in the archive. In order to run this job
+1. Login with the LS AAI at the Auth service and get the JWToken
+2. Edit the `examples/example-auth.sh` file and add the JWToken and the url to the file to be downloaded
+3. Run
+```bash
+./examples/example-auth.sh
+```
+The result should be shown in the logs of the `containerised-computation` container. One example of the `examples-auth.sh` exists in the repo under `examples`.
+
 ## Get the files
 
 ### Get files with samtools
