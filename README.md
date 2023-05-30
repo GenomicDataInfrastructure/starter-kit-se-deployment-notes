@@ -33,7 +33,7 @@ The ports for these services should be open, in order to be able to access them 
 7. Public key endpoint: stored at an S3 bucket in the Swedish case
 
 # LS AAI registration
-In order to gain access to the LS AAI and enable the users to login with their home organization credentials, the Auth service needs to be registered with LS AAI. The registration process is described [here](https://docs.google.com/document/d/17pNXM_psYOP5rWF302ObAJACsfYnEWhjvxAHzcjvfIE/edit)
+In order to gain access to the LS AAI and enable the users to login with their home organization credentials, the Auth and REMS services need to be registered with LS AAI. Both of them can be under the same service since you are allowed to have multiple Redirect URIs (one for the Auth and one for the REMS). The registration process is described [here](https://docs.google.com/document/d/17pNXM_psYOP5rWF302ObAJACsfYnEWhjvxAHzcjvfIE/edit)
 
 The details for the LS AAI configuration are described [here](https://lifescience-ri.eu/ls-login.html). For more information contact Dominic František Bučík on GDI slack.
 
@@ -88,7 +88,10 @@ Auth is a service in the storage-and-interfaces Docker compose file that enables
 In the `docker-compose.yml` file, apart from the credentials of the LS AAI account (registered in earlier steps), you should also set the redirect URL, to something like:
 ```yaml
 - ELIXIR_REDIRECTURL=https://login.gdi.nbis.se/elixir/login
+- ELIXIR_ID=<LS_AAI_CLIENT_ID>
+- ELIXIR_SECRET=<LS_AAI_CLIENT_SECRET>
 ```
+The values for `ELIXIR_ID` and `ELIXIR_SECRET` can be obtained from `spreg`, in the Swedish case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
 
 ### Storage
 The Swedish deployment is using an external S3 backend for storing the files. However, the Docker compose file in storage-and-interfaces contains a Minio instance, that can be used for archiving the data. In either case, set the credentials of the S3 backend in the `config/config.yaml` file, specifically the `S3AccessKey` and `S3SecretKey` values.
@@ -126,7 +129,7 @@ services:
 ```
 
 ## Deploying REMS
-Edit the configuration file `config.edn`, add/modify values for `public_url`, `database_url`, `oidc-metadata-url`, `oidc-scopes`, `oidc-client-id` and `oidc-client-secret`
+Edit the configuration file `config.edn`, add/modify values for `public_url`, `database_url`, `oidc-metadata-url`, `oidc-scopes`, `oidc-client-id` and `oidc-client-secret`.
 ```edn
 :public-url "https://rems.gdi.nbis.se/"
 :database-url "postgresql://db:5432/rems?user=<REMS_DATABASE_USER>&password=<REMS_DATABASE_PASSWORD>"
@@ -134,7 +137,7 @@ Edit the configuration file `config.edn`, add/modify values for `public_url`, `d
 :oidc-scopes "openid profile email ga4gh_passport_v1"
 ```
 
-The values for `oidc-client-id` and `oidc-client-secret` can be obtained from `spreg`, in the Swedish case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
+The values for `oidc-client-id` and `oidc-client-secret` can be obtained from `spreg`, as mentioned in the Auth service deployment above.
 
 To configure TLS for REMS, one needs to add three parameters, namely `ssl-port`, `ssl-keystore` and `ssl-keystore-password`. The value of `ssl-port` should be set as 3000, consequently, port for non-TLS can be modified to e.g. 3001.
 
