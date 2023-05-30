@@ -88,10 +88,8 @@ Auth is a service in the storage-and-interfaces Docker compose file that enables
 In the `docker-compose.yml` file, apart from the credentials of the LS AAI account (registered in earlier steps), you should also set the redirect URL, to something like:
 ```yaml
 - ELIXIR_REDIRECTURL=https://login.gdi.nbis.se/elixir/login
-- ELIXIR_ID=<LS_AAI_CLIENT_ID>
-- ELIXIR_SECRET=<LS_AAI_CLIENT_SECRET>
 ```
-The values for `ELIXIR_ID` and `ELIXIR_SECRET` can be obtained from `spreg`, in the Swedish case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
+while the values for `ELIXIR_ID` and `ELIXIR_SECRET` can be obtained from `spreg`, in the Swedish case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
 
 ### Storage
 The Swedish deployment is using an external S3 backend for storing the files. However, the Docker compose file in storage-and-interfaces contains a Minio instance, that can be used for archiving the data. In either case, set the credentials of the S3 backend in the `config/config.yaml` file, specifically the `S3AccessKey` and `S3SecretKey` values.
