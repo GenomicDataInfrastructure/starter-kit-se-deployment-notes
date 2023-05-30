@@ -33,7 +33,7 @@ The ports for these services should be open, in order to be able to access them 
 7. Public key endpoint: stored at an S3 bucket in our case
 
 # LS AAI registration
-In order to gain access to the LS AAI and enable the users to login with their home organization credentials, the service needs to be registered with LS AAI. The registration process is described [here](https://docs.google.com/document/d/17pNXM_psYOP5rWF302ObAJACsfYnEWhjvxAHzcjvfIE/edit)
+In order to gain access to the LS AAI and enable the users to login with their home organization credentials, the Auth service needs to be registered with LS AAI. The registration process is described [here](https://docs.google.com/document/d/17pNXM_psYOP5rWF302ObAJACsfYnEWhjvxAHzcjvfIE/edit)
 
 The details for the LS AAI configuration are described [here](https://lifescience-ri.eu/ls-login.html). For more information contact Dominic František Bučík on GDI slack.
 
@@ -94,7 +94,7 @@ In the `docker-compose.yml` file, apart from the credentials of the LS AAI accou
 The Swedish deployment is using an external S3 backend for storing the files. However, the Docker compose file in storage-and-interfaces contains a Minio instance, that can be used for archiving the data. In either case, set the credentials of the S3 backend in the `config/config.yaml` file, specifically the `S3AccessKey` and `S3SecretKey` values.
 
 ### Update the issuer configuration
-Under `config/iss.json` there exists a file that defines the issuer that will be used from the download service. Change this to point to your REMS instance, for example:
+In `config/iss.json` there exists a file that defines the issuer that will be used from the download service. Change this to point to your REMS instance, for example:
 ```json
 {
     "iss": "https://rems.gdi.nbis.se/",
@@ -182,7 +182,7 @@ starter-kit-storage-and-interfaces_shared:
   external: true
 ```
 
-The `private-key.jwk` created when deploying REMS does not contain the `kid` field, therefore (for now) that needs to be added manually, by copying the same value from the `public-key.jwk`. This might have been fixed on the key creation script, in later REMS versions.
+The `private-key.jwk` created when deploying REMS does not contain the `kid` field, therefore (for now) that needs to be added manually, by copying the same value from the `public-key.jwk`. This might have been fixed on the [key creation script](https://github.com/GenomicDataInfrastructure/starter-kit-rems/blob/main/generate_jwks.py) in later REMS versions.
 
 ### Create an administrator account
 In order to use REMS you need to create an admin account. Details about that can be found [here](https://github.com/GenomicDataInfrastructure/starter-kit-rems#get-admin-access).
@@ -321,7 +321,7 @@ Login to REMS (deployed earlier), pick a dataset from the catalogue item list an
 
 ### Get files with samtools
 After getting the request for access approved, you should be able to download the files in the specified dataset. That can be achieved by:
-1. Login to the auth service (deployed with storage-and-interface)
+1. Login to the auth service (deployed with storage-and-interface) (the url in the [SE case](https://login.gdi.nbis.se))
 2. Copy the access token
 3. Store the token in a file and export it to the `HTS_AUTH_LOCATION` variable
 ```bash
