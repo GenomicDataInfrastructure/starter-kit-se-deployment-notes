@@ -1,6 +1,6 @@
 # Deployment of GDI starter kit
 
-This repository is a collection of scripts and documentation produced during the deployment of the GDI starter kit in the Swedish node. However, it shouldn't be used as a standalone guide, and it probably lacks some steps not documented during the deployment.
+This repository is a collection of scripts and documentation produced during the deployment of the GDI starter kit in the Swedish node. However, it should not be used as a standalone guide, and it probably lacks some steps not documented during the deployment.
 
 The deployment described here was done in one VM (virtual machine) and the services were deployed in docker containers. The VM is running behind an ha-proxy, which was used to route the traffic to the different services. The VM is running Ubuntu 22.04 LTS.
 
@@ -23,14 +23,14 @@ The user facing services are the following:
 6. Beacon
 7. Public key endpoint
 
-The ports for these services should be open, in order to be able to access them from outside the VM. The ports in our case are:
+The ports for these services should be open, in order to be able to access them from outside the VM. The ports in the Swedish case are:
 1. Download: 8443
 2. Htsget: 8081
 3. REMS: 3000
 4. Login/Auth: 8080
 5. Inbox: 8000
 6. Beacon: 8085 TODO: Change to the actual port
-7. Public key endpoint: stored at an S3 bucket in our case
+7. Public key endpoint: stored at an S3 bucket in the Swedish case
 
 # LS AAI registration
 In order to gain access to the LS AAI and enable the users to login with their home organization credentials, the Auth service needs to be registered with LS AAI. The registration process is described [here](https://docs.google.com/document/d/17pNXM_psYOP5rWF302ObAJACsfYnEWhjvxAHzcjvfIE/edit)
@@ -134,7 +134,7 @@ Edit the configuration file `config.edn`, add/modify values for `public_url`, `d
 :oidc-scopes "openid profile email ga4gh_passport_v1"
 ```
 
-The values for `oidc-client-id` and `oidc-client-secret` can be obtained from `spreg`, in our case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
+The values for `oidc-client-id` and `oidc-client-secret` can be obtained from `spreg`, in the Swedish case from `https://services.aai.lifescience-ri.eu/spreg/auth/facilities/detail/<YOUR_PROJECT_ID>`
 
 To configure TLS for REMS, one needs to add three parameters, namely `ssl-port`, `ssl-keystore` and `ssl-keystore-password`. The value of `ssl-port` should be set as 3000, consequently, port for non-TLS can be modified to e.g. 3001.
 
@@ -228,7 +228,8 @@ There are some port collisions with storage-and-interfaces in this repo:
 8081 is used for mongo-express
 8000 is used for keycloak
 ```
-In our case, changed these are:
+
+In the Swedish case, changed these are:
 ```none
 9000 → 9090
 8081 → 8082
