@@ -1,0 +1,38 @@
+services:
+  funnel:
+    image: cerit.io/gdi/funnel:v0.12
+    command:
+      - /app/funnel
+      - server
+      - run
+      - -c
+      - /config/config.yaml
+    ports:
+      - 8010:8010
+      - 9091:9091
+    privileged: true
+    healthcheck:
+      test: ["CMD", "curl", "-fkq", "http://localhost:8010/health.html"]
+      interval: 5s
+      timeout: 5s
+      retries: 3
+    # environment: 
+    # - CURL_CA_BUNDLE=/shared/cert/ca.crt
+    networks:
+      - public
+      - secure
+    volumes:
+      - data:/data
+      - ./config:/config
+      - starter-kit-storage-and-interfaces_shared:/shared
+    extra_hosts:
+    - dockerhost:host-gateway
+
+volumes:
+  data:
+  starter-kit-storage-and-interfaces_shared:
+    external: true
+
+networks:
+  public:
+  secure:

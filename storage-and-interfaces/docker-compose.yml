@@ -1,0 +1,314 @@
+services:
+  credentials:
+    container_name: credentials
+    command:
+      - "/bin/sh"
+      - "/scripts/make_credentials.sh"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - PGPASSWORD=<ROOT_USER_PASSWORD>
+    image: ubuntu:kinetic
+    networks:
+      - secure
+    volumes:
+      - ./scripts:/scripts
+      - shared:/shared
+
+  data_loader:
+    container_name: data_loader
+    command:
+      - "/bin/sh"
+      - "/load_data.sh"
+    depends_on:
+      s3inbox:
+        condition: service_started
+    image: python:3.10-alpine
+    networks:
+      - secure
+    profiles:
+      - demo
+    volumes:
+      - ./scripts/load_data.sh:/load_data.sh
+      - shared:/shared
+
+  rabbitmq:
+    container_name: rabbitmq
+    environment:
+      - MQ_PASSWORD_HASH=<RABBITMQ_PASSWORD_HASH>
+      - MQ_USER=test
+      - MQ_VHOST=gdi
+      - NOTLS=true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "sh",
+          "-c",
+          "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 20
+    image: ghcr.io/neicnordic/sda-mq:v1.4.28
+    networks:
+      - secure
+    ports:
+      - 15672:15672
+    restart: always
+
+  postgres:
+    container_name: postgres
+    environment:
+      - DB_LEGA_IN_PASSWORD=<LEGA_IN_USER_PASSWORD>
+      - DB_LEGA_OUT_PASSWORD=<LEGA_OUT_USER_PASSWORD>
+      - POSTGRES_PASSWORD=<ROOT_USER_PASSWORD>
+      - NOTLS=true
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-h",
+          "localhost",
+          "-U",
+          "postgres"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 20
+    image: ghcr.io/neicnordic/sda-db:v2.1.5
+    networks:
+      - secure
+    restart: always
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+        #- /etc/letsencrypt/live/download.gdi.nbis.se/:/live/download.gdi.nbis.se
+        #- /etc/letsencrypt/archive/download.gdi.nbis.se/:/archive/download.gdi.nbis.se
+
+  s3:
+    command: server /data  --console-address ":9001"
+    container_name: s3
+    environment:
+      - MINIO_ROOT_USER=<MINIO_USER>
+      - MINIO_ROOT_PASSWORD=<MINIO_USER_PASSWORD>
+      - MINIO_SERVER_URL=http://127.0.0.1:9000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "curl",
+          "-fq",
+          "http://localhost:9000/minio/health/live"
+        ]
+      interval: 5s
+      timeout: 20s
+      retries: 3
+    image: minio/minio:RELEASE.2023-02-10T18-48-39Z
+    networks:
+      - secure
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    restart: always
+    volumes:
+      - s3data:/data
+
+  ## data ingest pipeline
+  download:
+    command: sda-download
+    container_name: download
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - DB_PASSWORD=<DOWNLOAD_DATABASE_PASSWORD>
+      - DB_USER=<DOWNLOAD_DATABASE_USER>
+    image: harbor.nbis.se/gdi/sda-download:dev
+    networks:
+      - public
+      - secure
+    ports:
+      - 8443:8443
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+      - ./config/iss.json:/iss.json
+      - shared:/shared
+
+  finalize:
+    command: sda-finalize
+    container_name: finalize
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - BROKER_PASSWORD=<FINALIZE_RABBITMQ_PASSWORD>
+      - BROKER_QUEUE=accessionIDs
+      - BROKER_ROUTINGKEY=completed
+      - BROKER_USER=<FINALIZE_RABBITMQ_USER>
+      - DB_PASSWORD=<FINALIZE_DATABASE_PASSWORD>
+      - DB_USER=<FINALIZE_DATABASE_USER>
+    image: ghcr.io/neicnordic/sda-pipeline:v0.4.7
+    networks:
+      - secure
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+
+  ingest:
+    command: sda-ingest
+    container_name: ingest
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - BROKER_PASSWORD=<INGEST_RABBITMQ_PASSWORD>
+      - BROKER_QUEUE=ingest
+      - BROKER_ROUTINGKEY=completed
+      - BROKER_USER=<INGEST_RABBITMQ_USER>
+      - DB_PASSWORD=<INGEST_DATABASE_PASSWORD>
+      - DB_USER=<INGEST_DATABASE_USER>
+      - SCHEMA_TYPE=federated
+    image: ghcr.io/neicnordic/sda-pipeline:v0.4.7
+    networks:
+      - secure
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+      - shared:/shared
+
+  mapper:
+    command: sda-mapper
+    container_name: mapper
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - BROKER_PASSWORD=<MAPPER_RABBITMQ_PASSWORD>
+      - BROKER_QUEUE=mappings
+      - BROKER_USER=<MAPPER_RABBITMQ_USER>
+      - DB_PASSWORD=<MAPPER_DATABASE_PASSWORD>
+      - DB_USER=<MAPPER_DATABASE_USER>
+    image: ghcr.io/neicnordic/sda-pipeline:v0.4.7
+    networks:
+      - secure
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+
+  verify:
+    command: sda-verify
+    container_name: verify
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - BROKER_PASSWORD=<VERIFY_RABBITMQ_PASSWORD>
+      - BROKER_QUEUE=archived
+      - BROKER_ROUTINGKEY=verified
+      - BROKER_USER=<VERIFY_RABBITMQ_USER>
+      - DB_PASSWORD=<VERIFY_DATABASE_PASSWORD>
+      - DB_USER=<VERIFY_DATABASE_USER>
+      - SCHEMA_TYPE=federated
+    image: ghcr.io/neicnordic/sda-pipeline:v0.4.7
+    networks:
+      - secure
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+      - shared:/shared
+
+  s3inbox:
+    command: sda-s3inbox
+    container_name: s3inbox
+    depends_on:
+      credentials:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    environment:
+      - BROKER_PASSWORD=<INBOX_RABBITMQ_PASSWORD>
+      - BROKER_ROUTINGKEY=inbox
+      - BROKER_USER=<INBOX_RABBITMQ_USER>
+      - DB_PASSWORD=<INBOX_DATABASE_PASSWORD>
+      - DB_USER=<INBOX_DATABASE_USER>
+      - SERVER_CONFFILE=/config.yaml
+      - SERVER_CERT=/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/fullchain.pem
+      - SERVER_KEY=/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/privkey.pem
+    image: ghcr.io/neicnordic/sda-s3proxy:v0.2.19
+    networks:
+      - public
+      - secure
+    ports:
+      - "8000:8000"
+    restart: always
+    volumes:
+      - ./config/config.yaml:/config.yaml
+      - shared:/shared
+
+  auth:
+    container_name: auth
+    image: ghcr.io/neicnordic/sda-auth:v0.7.7
+    environment:
+      - ELIXIR_ID=<LS_AAI_CLIENT_ID>
+      - ELIXIR_PROVIDER=https://login.elixir-czech.org/oidc/
+      - ELIXIR_SECRET=<LS_AAI_CLIENT_SECRET>
+      - ELIXIR_JWKPATH=/jwk
+      - ELIXIR_REDIRECTURL=https://login.gdi.nbis.se/elixir/login
+      - LOG_LEVEL=info
+      - S3INBOX=inbox.gdi.nbis.se
+      - JWTISSUER=https://login.elixir-czech.org/oidc/
+      - JWTPRIVATEKEY=/shared/keys/jwt.key
+      - JWTSIGNATUREALG=ES256
+      - SERVER_CERT=/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/fullchain.pem
+      - SERVER_KEY=/shared/etc/letsencrypt/live/htsget.gdi.nbis.se/privkey.pem
+      - RESIGNJWT=False
+    volumes:
+      - shared:/shared
+    ports:
+      - 8080:8080
+
+volumes:
+  pgdata:
+  shared:
+  s3data:
+
+networks:
+  public:
+  secure:

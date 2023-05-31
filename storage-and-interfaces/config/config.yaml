@@ -1,0 +1,92 @@
+app: # this is for download
+  host: "0.0.0.0"
+  servercert: /shared/etc/letsencrypt/live/htsget.gdi.nbis.se/fullchain.pem
+  serverkey: /shared/etc/letsencrypt/live/htsget.gdi.nbis.se/privkey.pem
+  port: "8443"
+
+archive:
+  type: "s3"
+  url: "<S3URL>"
+  port: 443
+  accesskey: "<S3AccessKey>"
+  secretkey: "<S3SecretKey>"
+  bucket: "gdi-archive"
+  chunksize: 15
+
+aws:
+  url: "<S3URL>"
+    #readypath: "/minio/health/ready"
+  accessKey: "<S3AccessKey>"
+  secretKey: "<S3SecretKey>"
+  bucket: "gdi-inbox"
+  region: "us-east-1"
+
+broker:
+  host: "rabbitmq"
+  port: 5672
+  user: ""
+  password: ""
+  vhost: "gdi"
+  queue: ""
+  exchange: "sda"
+  routingKey: ""
+  routingError: "error"
+  ssl: "false"
+
+c4gh:
+  passphrase: "<Crypt4ghPassPhrase>"
+  filepath: "/shared/c4gh.sec.pem"
+  backupPubKey: "/shared/c4gh.pub.pem"
+
+db:
+  host: "postgres"
+  port: 5432
+  user: ""
+  password: ""
+  database: "lega"
+  sslmode: "disable"
+
+inbox:
+  type: "s3"
+  url: "<S3URL>"
+  port: 443
+  accesskey: "<S3AccessKey>"
+  secretkey: "<S3SecretKey>"
+  bucket: "gdi-inbox"
+  chunksize: 15
+
+log:
+  level: "debug"
+  format: "json"
+
+oidc:
+  # oidc configuration API must have values for "userinfo_endpoint" and "jwks_uri"
+  configuration:
+    url: "https://login.elixir-czech.org/oidc/.well-known/openid-configuration"
+  trusted:
+    iss: "/iss.json"
+
+schema:
+  type: isolated
+
+server:
+  jwtpubkeypath: "/shared/keys/pub/"
+  jwtpubkeyurl: "https://login.elixir-czech.org/oidc/jwk"
+
+session:
+  # session key expiration time in seconds
+  # default value = -1 for disabled state
+  # a positive integer enables sessions
+  # a negative integer disables sessions
+  expiration: 28800
+  # domain name must be set to the hostname (FQDN) of the service
+  domain: "localhost"
+  # session cookie Secure value, if true, TLS must be active
+  # default value = true
+  secure: true
+  # session cookie HttpOnly value, if true, TLS must be active
+  # default value = true
+  httponly: true
+  # name of session cookie
+  # default value = sda_session_key
+  name: "sda_session_key"

@@ -1,0 +1,10 @@
+[
+    {
+        "iss": "https://login.elixir-czech.org/oidc/",
+        "jku": "https://login.elixir-czech.org/oidc/jwk"
+    },
+    {
+        "iss": "https://rems.gdi.nbis.se/",
+        "jku": "https://rems.gdi.nbis.se/api/jwk"
+    }	
+]

@@ -1,0 +1,56 @@
+version: "3.9"
+services:
+
+  app:
+    container_name: rems_app
+    image: cscfi/rems:latest
+    depends_on:
+      db:
+        condition: service_started
+    ports:
+      - "3000:3000"
+      - "3001:3001"
+    volumes:
+      - ./config.edn:/rems/config/config.edn
+      - ./styles.css:/rems/theme/styles.css
+      - ./theme.edn:/rems/theme/theme.edn
+      - ./en.edn:/rems/theme/extra-translations/en.edn
+      - ./logo_medium.png:/rems/theme/public/img/logo_medium.png
+      - ./logo_small.png:/rems/theme/public/img/logo_small.png
+      - ./ls_login.png:/rems/theme/public/img/ls_login.png
+      - ./private-key.jwk:/rems/keys/private-key.jwk
+      - ./public-key.jwk:/rems/keys/public-key.jwk
+      - ./certs:/rems/certs
+
+  db:
+    container_name: rems_db
+    image: postgres:13
+    environment:
+      POSTGRES_DB: rems
+      POSTGRES_USER: <REMS_DATABASE_USER>
+      POSTGRES_PASSWORD: <REMS_DATABASE_PASSWORD>
+    ports:
+      - "127.0.0.1:5433:5432"
+    # remove this if you don't want a persistent database
+    volumes:
+    - remsdb:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-h",
+          "localhost",
+          "-U",
+          "rems"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  remsdb:
+    driver: local
+  starter-kit-storage-and-interfaces_shared:
+    external: true
