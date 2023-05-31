@@ -267,6 +267,12 @@ docker exec beacon python beacon/db/get_descendants.py
 ```
 
 ## Create endpoint for public crypt4gh key
+
+From the VM where the storage-and-interfaces is deployed, extract the crypt4gh public key from the download container using:
+```bash
+docker cp download:/shared/c4gh.pub.pem .
+```
+
 Create a new bucket and upload the key to that bucket. Then change the key permissions to public:
 ```bash
 s3cmd -c <s3config> mb s3://gdi-public
@@ -277,11 +283,6 @@ s3cmd -c <s3config> setacl s3://gdi-public/key/c4gh.pub.pem --acl-public
 If you are using the Swedish GDI implementation, the public key for the next step can be found under `https://s3.sto3.safedc.net/gdi-public/key/c4gh.pub.pem`
 
 ## Uploading data to the archive
-
-From the VM where the storage-and-interfaces is deployed, extract the crypt4gh public key from the download container using:
-```bash
-docker cp download:/shared/c4gh.pub.pem .
-```
 
 Download the `c4gh.pub.pem` to the machine where the dataset exists.
 
