@@ -212,9 +212,7 @@ If everything worked well, you should be able to see the visas created by REMS i
 ### Using REMS
 In order to use REMS and be able to apply for access, you need to follow the steps described [here](https://github.com/GenomicDataInfrastructure/starter-kit-rems#create-your-own-data). This guide assumes that there exists an organisation, workflow etc.
 
-## Deploying Beacon2 (WIP)
-
-TODO: This part is a work in progress and should probably be skipped for now
+## Deploying Beacon2
 
 Clone the starter-kit-beacon2-ri-api repo using the following command:
 ```bash
@@ -236,8 +234,46 @@ In the Swedish case, changed these are:
 8081 → 8082
 8000 → 8083
 ```
+The new ports are included in the sample `beacon/docker-compose.yml` file. The `/beacon/permissions/auth.py` file (located in `permissions` folder of the `Beacon` repository) needs to be updated with the credentials of the LS AAI. Finally, the `/beacon/permissions/permissions.py` file (located in `permissions` folder of the `Beacon` repository) needs to be changed, by adding a user that should have access to a number of datasets. In the example, the user `<SOME_LS_AAI_USER>` is given access to the test dataset that will be added after starting the services. The `<SOME_LS_AAI_USER>` is the `preferred_username` returned by LS AAI when querying the user-info endpoint.
 
-Start the deployment with: 
+NOTE: To run the beacon behind an nginx server with TLS termination, remove the port mapping from the beacon container, and create a new nginx container (included in the `docker-compose.yml` file here) like this:
+
+```yaml
+  # Nginx TLS proxy
+  nginx:
+    image: nginx:mainline-alpine3.17-slim
+    depends_on:
+      beacon:
+        condition: service_started
+    ports:
+      - 5050:443
+    volumes:
+      - ./tls_nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - starter-kit-storage-and-interfaces_shared:/shared
+    networks:
+      - my-app-network
+
+volumes:
+  starter-kit-storage-and-interfaces_shared:
+    external: true
+```
+
+and create the `tls_nginx.conf` (included in the `tls_nginx.conf` file under `beacon` in this repository) file as:
+```
+server {
+    listen              443 ssl;
+    server_name         localhost <hostname>;
+    ssl_certificate     /shared/etc/letsencrypt/live/<cert-name>/fullchain.pem;
+    ssl_certificate_key /shared/etc/letsencrypt/live/<cert-name>/privkey.pem;
+
+    location / {
+        proxy_pass http://beacon:5050/;
+    }
+
+}
+```
+
+Now that all the files are updated, the images need to be built and the services can be started with: 
 ```bash
 docker compose up --build -d
 ```
@@ -266,6 +302,32 @@ docker exec beacon python beacon/db/extract_filtering_terms.py
 docker exec beacon python beacon/db/get_descendants.py
 ```
 
+To check if the user can query the `Beacon`, login to the Auth service and extract the token JWToken, then use it in a curl command like the following:
+```bash
+curl \
+  -H 'Content-Type: application/json' \
+  -H 'Authorization: Bearer <JWToken>' \
+  -X POST \
+  -d '{
+    "meta": {
+        "apiVersion": "2.0"
+    },
+    "query": {
+        "requestParameters": {
+        "datasets": ["CINECA_synthetic_cohort_EUROPE_UK1"]       },
+        "filters": [],
+        "includeResultsetResponses": "HIT",
+        "pagination": {
+            "skip": 0,
+            "limit": 10
+        },
+        "testMode": false,
+        "requestedGranularity": "record"
+    }
+  }' \
+https://beacon.gdi.nbis.se/api/individuals 
+```
+
 ## Create endpoint for public crypt4gh key
 
 From the VM where the storage-and-interfaces is deployed, extract the crypt4gh public key from the download container using:
@@ -280,7 +342,7 @@ s3cmd -c <s3config> put c4gh.pub.pem s3://gdi-public/key/
 s3cmd -c <s3config> setacl s3://gdi-public/key/c4gh.pub.pem --acl-public
 ```
 
-If you are using the Swedish GDI implementation, the public key for the next step can be found under `https://s3.sto3.safedc.net/gdi-public/key/c4gh.pub.pem`
+In the Swedish case, the public key for the next step can be found under `https://s3.sto3.safedc.net/gdi-public/key/c4gh.pub.pem`
 
 ## Uploading data to the archive
 
