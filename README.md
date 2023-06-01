@@ -273,7 +273,7 @@ server {
 }
 ```
 
-Now that all the files are updated, the images need to be build and the services can be started with: 
+Now that all the files are updated, the images need to be built and the services can be started with: 
 ```bash
 docker compose up --build -d
 ```
@@ -302,7 +302,7 @@ docker exec beacon python beacon/db/extract_filtering_terms.py
 docker exec beacon python beacon/db/get_descendants.py
 ```
 
-To check if the user can query the `Beacon` login to the Auth service and extract the token JWToken and use it in a curl command like the following:
+To check if the user can query the `Beacon`, login to the Auth service and extract the token JWToken, then use it in a curl command like the following:
 ```bash
 curl \
   -H 'Content-Type: application/json' \
@@ -342,7 +342,7 @@ s3cmd -c <s3config> put c4gh.pub.pem s3://gdi-public/key/
 s3cmd -c <s3config> setacl s3://gdi-public/key/c4gh.pub.pem --acl-public
 ```
 
-If you are using the Swedish GDI implementation, the public key for the next step can be found under `https://s3.sto3.safedc.net/gdi-public/key/c4gh.pub.pem`
+In the Swedish case, the public key for the next step can be found under `https://s3.sto3.safedc.net/gdi-public/key/c4gh.pub.pem`
 
 ## Uploading data to the archive
 
