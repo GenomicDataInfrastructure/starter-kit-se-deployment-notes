@@ -131,7 +131,7 @@ services:
     environment:
       - DB_PASSWORD=<DOWNLOAD_DATABASE_PASSWORD>
       - DB_USER=<DOWNLOAD_DATABASE_USER>
-    image: harbor.nbis.se/gdi/sda-download:dev
+    image: ghcr.io/neicnordic/sda-download:v1.9.16
     networks:
       - public
       - secure
