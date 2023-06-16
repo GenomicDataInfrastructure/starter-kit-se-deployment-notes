@@ -97,7 +97,7 @@ while the values for `ELIXIR_ID` and `ELIXIR_SECRET` can be obtained from `spreg
 The Swedish deployment is using an external S3 backend for storing the files. However, the Docker compose file in storage-and-interfaces contains a Minio instance, that can be used for archiving the data. In either case, set the credentials of the S3 backend in the `config/config.yaml` file, specifically the `S3AccessKey` and `S3SecretKey` values.
 
 ### Update the issuer configuration
-In `config/iss.json` there exists a file that defines token issuers that the download service will trust. Change the REMS block to point to your own REMS instance, for example:
+In `config/iss.json` there exists a file that defines token issuers that the download service will trust. Add/Update the REMS block to point to your own REMS instance, for example:
 ```json
 {
     "iss": "https://rems.gdi.nbis.se/",
