@@ -1,4 +1,4 @@
-# Deployment of GDI starter kit
+# Deployment of GDI starter kit MS7 (2023)
 
 This repository is a collection of scripts and documentation produced during the deployment of the GDI starter kit in the Swedish node. However, it should not be used as a standalone guide, and it probably lacks some steps not documented during the deployment.
 
